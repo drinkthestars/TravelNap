@@ -1,0 +1,37 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity" >
+	
+	<fragment
+	    android:id="@+id/map"
+	    android:layout_width="match_parent"
+	    android:layout_height="300dp"
+	    class="com.google.android.gms.maps.SupportMapFragment" />
+
+	<Button
+	    android:id="@+id/btSubmit"
+	    style="?android:attr/buttonStyleSmall"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignBaseline="@+id/etLocation"
+	    android:layout_alignBottom="@+id/etLocation"
+	    android:layout_toRightOf="@+id/etLocation"
+	    android:onClick="onSubmitLocation"
+	    android:text="Go" />
+
+	<EditText
+	    android:id="@+id/etLocation"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentLeft="true"
+	    android:layout_below="@+id/map"
+	    android:layout_marginLeft="34dp"
+	    android:layout_marginTop="34dp"
+	    android:ems="10" >
+
+	    <requestFocus />
+	</EditText>
+    
+</RelativeLayout>
