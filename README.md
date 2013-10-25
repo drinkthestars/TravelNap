@@ -1,4 +1,4 @@
-android-google-maps-demo
+TravelNap
 ========================
 
-A simple Google Maps Android API v2 Demo app
+A simple app that allows you to nap while travelling, and wakes you up once you are close to your destination.
