@@ -4,15 +4,16 @@
     android:versionCode="1"
     android:versionName="1.0" >
 
-    <permission android:name="com.example.mapdemo.permission.MAPS_RECEIVE" />
+    <permission android:name="com.nebula.smoothie.permission.MAPS_RECEIVE" />
 
-    <uses-permission android:name="com.example.mapdemo.permission.MAPS_RECEIVE" />
+    <uses-permission android:name="com.nebula.smoothie.permission.MAPS_RECEIVE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-
+	<uses-permission android:name="android.permission.ACESSS_NETWORK_STATE" />
+	
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
@@ -23,7 +24,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.example.mapdemo.MainActivity"
+            android:name="com.nebula.smoothie.MainActivity"
             android:label="@string/title_activity_main" >
          
             <intent-filter>
@@ -35,10 +36,10 @@
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="YOUR-API-KEY-HERE" />
+            android:value="AIzaSyBh9asWtGlRkNQkoiHk1omkYejRxpt6S78" />
 
         <activity
-            android:name="com.example.mapdemo.CreateActivity"
+            android:name="com.nebula.smoothie.CreateActivity"
             android:label="@string/app_name" >
         </activity>
     </application>
