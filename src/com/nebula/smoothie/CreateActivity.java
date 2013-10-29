@@ -17,11 +17,13 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationButtonClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
@@ -214,7 +216,16 @@ public class CreateActivity extends FragmentActivity implements
 					double lat = objLocInfo.getJSONObject("geometry").getJSONObject("location").getDouble("lat");
 					double lng = objLocInfo.getJSONObject("geometry").getJSONObject("location").getDouble("lng");
 					Log.d("DEBUG", "Lat: " + lat + "   Lng: " + lng);
-					map.moveCamera( CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lng) ,4) );
+					
+					//Adding marker
+					MarkerOptions mOpts = new MarkerOptions();
+					mOpts.position(new LatLng(lat, lng));
+					map.addMarker(mOpts);
+					
+					//Animating camera
+					CameraUpdate newLoc = CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lng), 15);
+					map.animateCamera(newLoc);
+					
     			} catch (JSONException e) {
 					e.printStackTrace();
 				}
