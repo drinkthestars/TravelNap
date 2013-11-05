@@ -33,5 +33,13 @@
 
 	    <requestFocus />
 	</EditText>
+
+	<EditText
+	    android:id="@+id/editText1"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_below="@+id/btSubmit"
+	    android:layout_toLeftOf="@+id/btSubmit"
+	    android:ems="10" />
     
 </RelativeLayout>

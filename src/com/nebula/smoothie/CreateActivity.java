@@ -1,17 +1,25 @@
 package com.nebula.smoothie;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.location.Location;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -19,6 +27,8 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -32,7 +42,8 @@ import com.loopj.android.http.JsonHttpResponseHandler;
 
 public class CreateActivity extends FragmentActivity implements
 GooglePlayServicesClient.ConnectionCallbacks,
-GooglePlayServicesClient.OnConnectionFailedListener {
+GooglePlayServicesClient.OnConnectionFailedListener,
+LocationListener{
 
 	// Global constants
 	LocationClient mLocationClient;
@@ -42,45 +53,117 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	double currLat;
 	double currLng;
 	Location mCurrentLocation;
-
+	LatLng dest = null;
+	boolean mUpdatesRequested = true;
+	NapAlarm newAlarm;
+	
+	// Milliseconds per second
+    private static final int MILLISECONDS_PER_SECOND = 1000;
+    // Update frequency in seconds
+    public static final int UPDATE_INTERVAL_IN_SECONDS = 10;
+    // Update frequency in milliseconds
+    private static final long UPDATE_INTERVAL =
+            MILLISECONDS_PER_SECOND * UPDATE_INTERVAL_IN_SECONDS;
+    // The fastest update frequency, in seconds
+    private static final int FASTEST_INTERVAL_IN_SECONDS = 1;
+    // A fast frequency ceiling in milliseconds
+    private static final long FASTEST_INTERVAL =
+            MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
+    // Define an object that holds accuracy and frequency parameters
+    LocationRequest mLocationRequest;
+    SharedPreferences mPrefs;
+    Editor mEditor;
 	/*
 	 * Define a request code to send to Google Play services
 	 * This code is returned in Activity.onActivityResult
 	 */
 	private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
 		setupViews();
-
+		
+		// Create the LocationRequest object
+        mLocationRequest = LocationRequest.create();
+        // Use high accuracy
+        mLocationRequest.setPriority(
+                LocationRequest.PRIORITY_HIGH_ACCURACY);
+        // Set the update interval to 5 seconds
+        mLocationRequest.setInterval(UPDATE_INTERVAL);
+        // Set the fastest update interval to 1 second
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+        
+        // Open the shared preferences
+        mPrefs = getSharedPreferences("SharedPreferences",
+                Context.MODE_PRIVATE);
+        // Get a SharedPreferences editor
+        mEditor = mPrefs.edit();
+        /*
+         * Create a new location client, using the enclosing class to
+         * handle callbacks.
+         */
+        mLocationClient = new LocationClient(this, this, this);
+        // Start with updates turned off
+        mUpdatesRequested = true;
+        
 		map = ((SupportMapFragment)
 				getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
 
 		mLocationClient = new LocationClient(this, this, this);
-
+		newAlarm = new NapAlarm();
+		
 		map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 		map.setMyLocationEnabled(true);
 		map.setOnMyLocationButtonClickListener(new OnMyLocationButtonClickListener() {
 
 			@Override
 			public boolean onMyLocationButtonClick() {
-				if (mLocationClient.isConnected()) {
-					mCurrentLocation = mLocationClient.getLastLocation();
-					
-					//Set up current lat and lng
-					currLat = mCurrentLocation.getLatitude();
-					currLng = mCurrentLocation.getLongitude();
-					
-				} else {
-					Log.d("DEBUG", "Location Client NOT CONNECTED");
-				}
-				return false;
+				return getCurrentLocation();
 			}
 		});
 		
-		
+		final View mapView = getSupportFragmentManager().findFragmentById(R.id.map).getView();
+		if (mapView.getViewTreeObserver().isAlive()) {
+			mapView.getViewTreeObserver().addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
+				@SuppressWarnings("deprecation")
+				// We use the new method when supported
+				@SuppressLint("NewApi")
+				// We check which build version we are using.
+				@Override
+				public void onGlobalLayout() {
+					if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+						mapView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+					} else {
+						mapView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+					}
+					// Send notification that map-loading has completed.
+					getCurrentLocation();
+				}
+			});
+		}
+	}
+
+	private boolean getCurrentLocation() {
+		Log.d("DEBUG", "INSIDE GET CURRENT LOCATION");
+		if (mLocationClient.isConnected()) {
+			mCurrentLocation = mLocationClient.getLastLocation();
+
+			//Set up current lat and lng
+			currLat = mCurrentLocation.getLatitude();
+			currLng = mCurrentLocation.getLongitude();
+			
+			//Updating alarm obj
+			newAlarm.setSource(new LatLng(currLat, currLng));
+			Log.d("DEBUG", "Updated Alarm Object!");
+			
+			map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currLat, currLng), 15));
+
+		} else {
+			Log.d("DEBUG", "Location Client NOT CONNECTED");
+		}
+		return false;
 	}
 
 	//Setup views
@@ -104,15 +187,27 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	 */
 	@Override
 	protected void onStop() {
-		// Disconnecting the client invalidates it.
-		mLocationClient.disconnect();
-		super.onStop();
+		// If the client is connected
+        if (mLocationClient.isConnected()) {
+            /*
+             * Remove location updates for a listener.
+             * The current Activity is the listener, so
+             * the argument is "this".
+             */
+       	mLocationClient.removeLocationUpdates(this);
+        }
+        /*
+         * After disconnect() is called, the client is
+         * considered "dead".
+         */
+        mLocationClient.disconnect();
+        super.onStop();
 	}
 
 	/*
-     * Called by Location Services if the attempt to
-     * Location Services fails.
-     */
+	 * Called by Location Services if the attempt to
+	 * Location Services fails.
+	 */
 	@Override
 	public void onConnectionFailed(ConnectionResult connectionResult) {
 		/*
@@ -162,61 +257,121 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 	 */
 	@Override
 	public void onConnected(Bundle dataBundle) {
-		Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
+		Log.d("DEBUG", "Connected");
+		getCurrentLocation();
 		
-		if (mLocationClient.isConnected()) {
-			mCurrentLocation = mLocationClient.getLastLocation();
-			
-			//Set up current lat and lng
-			currLat = mCurrentLocation.getLatitude();
-			currLng = mCurrentLocation.getLongitude();
-			
-		} else {
-			Log.d("DEBUG", "Location Client NOT CONNECTED");
-		}
+		// Display the connection status
+        Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
+        // If already requested, start periodic updates
+        
+        Log.d("DEBUG", "===========>mUpdatesRequested: " + mUpdatesRequested);
+        if (true) {
+        	Log.d("DEBUG", "!!!!!!!!!!!!!! PREIODIC UPDATES STARTED");
+            mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        }
 	}
+	
+    // Define the callback method that receives location updates
+    @Override
+    public void onLocationChanged(Location location) {
+    	Log.d("DEBUG", "!!!!!!!!!! LOCATION CHANGED! !!!!!!!!!!!");
+        // Report to the UI that the location was updated
+        String msg = "Updated Location: " +
+                Double.toString(location.getLatitude()) + "," +
+                Double.toString(location.getLongitude());
+        //Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+        Log.d("DEBUG", msg);
+        
+        //need new lat and lng
+        double newlat = location.getLatitude();
+        double newLong = location.getLongitude();
+        
+        //Updating source in alarm
+        newAlarm.setSource(new LatLng(newlat, newLong));
+        Log.d("DEBUG", "Updated source in alarm!");
+        
+        if (dest != null) {
+	        String url = RouteDraw.makeURL(newlat, newLong, dest.latitude, dest.longitude);
+	        JSONParser jParser = new JSONParser();
+			String json = jParser.getStringJSONFromUrl(url);
+			double dist;
+			try {
+				dist = JSONParser.getDistance(new JSONObject(json));
+				newAlarm.setDistance(dist);
+				Log.d("DEBUG", "NEW DISTANCE: " + dist);
+				if (dist <= 0.5) {
+					//ring the alarm
+					Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+					Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
+					r.play();
+				}
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+        }
+    }
+    
+    @Override
+    protected void onPause() {
+        // Save the current setting for updates
+        mEditor.putBoolean("KEY_UPDATES_ON", mUpdatesRequested);
+        mEditor.commit();
+        super.onPause();
+    }
+    
+    @Override
+    protected void onResume() {
+    	super.onResume();
+        /*
+         * Get any previous setting for location updates
+         * Gets "false" if an error occurs
+         */
+        if (mPrefs.contains("KEY_UPDATES_ON")) {
+            mUpdatesRequested =
+                    mPrefs.getBoolean("KEY_UPDATES_ON", false);
 
+        // Otherwise, turn off location updates
+        } else {
+            mEditor.putBoolean("KEY_UPDATES_ON", false);
+            mEditor.commit();
+        }
+    }
+    
 	public void loadAddressLatLon(String location){
 		AsyncHttpClient client = new AsyncHttpClient();
 		String apiReq = "http://maps.googleapis.com/maps/api/geocode/json?address=" + location.replace(" ", "+") + "&sensor=true";
-		Log.d("DEBUG", "Api request URI: " + apiReq);
-
-
 		Log.d("DEBUG", "BEFORE CLIENT.GET()");
 		client.get(apiReq, new JsonHttpResponseHandler() {
 			@Override
 			public void onSuccess(JSONObject response) {
 				Log.d("DEBUG", "Got address info!");
-				JSONArray locInfo = null;
-				try {
-					locInfo = response.getJSONArray("results");
-					JSONObject objLocInfo = locInfo.getJSONObject(0);
-					double lat = objLocInfo.getJSONObject("geometry").getJSONObject("location").getDouble("lat");
-					double lng = objLocInfo.getJSONObject("geometry").getJSONObject("location").getDouble("lng");
-					Log.d("DEBUG", "Lat: " + lat + "   Lng: " + lng);
 
-					//Adding marker
-					MarkerOptions mOpts = new MarkerOptions();
-					mOpts.position(new LatLng(lat, lng));
-					map.addMarker(mOpts);
+				//Adding marker
+				MarkerOptions mOpts = new MarkerOptions();
+				dest = JSONParser.getLatLng(response);
+				mOpts.position(dest);
+				map.addMarker(mOpts);
 
-					//Animating camera
-					CameraUpdate newLoc = CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lng), 15);
-					map.animateCamera(newLoc);
-					new connectAsyncTask(RouteDraw.makeURL(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), lat, lng), map).execute();					
-					
-					Log.d("DEBUG", "CURRENT LAT: " + currLat + "   CURRENT LNG: " + currLng);
-					LatLngBounds.Builder builder = new LatLngBounds.Builder();
-					builder.include(new LatLng(lat, lng));
-					builder.include(new LatLng(currLat, currLng));
-					LatLngBounds bounds = builder.build();
-					map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 10));
-					Log.d("DEBUG", "CENTER IS: " + bounds.getCenter().toString());
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
+				//Updating destination in alarm
+		        newAlarm.setDest(dest);
+		        Log.d("DEBUG", "Updated destination in alarm!");
+		        
+				//Animating camera
+				CameraUpdate newLoc = CameraUpdateFactory.newLatLngZoom(dest, 15);
+				map.animateCamera(newLoc);
+				
+				//Drawing path
+				new connectAsyncTask(RouteDraw.makeURL(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude(), 
+						dest.latitude, dest.longitude), map).execute();					
+
+				Log.d("DEBUG", "CURRENT LAT: " + currLat + "   CURRENT LNG: " + currLng);
+				LatLngBounds.Builder builder = new LatLngBounds.Builder();
+				builder.include(dest);
+				builder.include(new LatLng(currLat, currLng));
+				LatLngBounds bounds = builder.build();
+				map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 10));
+				Log.d("DEBUG", "CENTER IS: " + bounds.getCenter().toString());
 			}
-		
 			@Override
 			public void onFailure(Throwable arg0) {
 				Log.d("DEBUG", "Api call failed! : " + arg0.toString());
@@ -241,7 +396,6 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 		}
 		@Override
 		protected void onPreExecute() {
-			// TODO Auto-generated method stub
 			super.onPreExecute();
 			progressDialog = new ProgressDialog(CreateActivity.this);
 			progressDialog.setMessage("Fetching route, Please wait...");
@@ -249,9 +403,17 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 			progressDialog.show();
 		}
 		@Override
-		protected String doInBackground(Void... params) {
+		protected String  doInBackground(Void... params) {
 			JSONParser jParser = new JSONParser();
-			String json = jParser.getJSONFromUrl(url);
+			String json = jParser.getStringJSONFromUrl(url);
+			try {
+				double dist = JSONParser.getDistance(new JSONObject(json));
+				newAlarm.setDistance(dist);
+				Log.d("DEBUG", "NEW DISTANCE: " + dist);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
 			return json;
 		}
 		@Override
@@ -261,7 +423,6 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 			if(result!=null){
 				rdraw = new RouteDraw(map);
 				rdraw.drawPath(result);
-
 			}
 		}
 	}
