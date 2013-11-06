@@ -5,18 +5,23 @@ import com.google.android.gms.maps.model.LatLng;
 /*
  * Model for an alarm
  */
-public class NapAlarm {
+public class NapAlarm{
 	private LatLng source;
+	
 	private LatLng dest;
+	
 	private String transMode;
+	
 	private double distance;
+	
 	private double thresh;
 	
 	public NapAlarm() {
-		
+		super();
 	}
 	
 	public NapAlarm(LatLng source, LatLng dest) {
+		super();
 		this.source = source;
 		this.dest = dest;
 	}

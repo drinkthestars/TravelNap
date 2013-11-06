@@ -30,12 +30,12 @@ public class RouteDraw {
 		urlString.append(",");
 		urlString
 		.append(Double.toString( sourcelog));
-		urlString.append("&destination=");// to
+		urlString.append("&destination=");
 		urlString
 		.append(Double.toString( destlat));
 		urlString.append(",");
 		urlString.append(Double.toString( destlog));
-		urlString.append("&sensor=false&mode=driving&alternatives=true");
+		urlString.append("&sensor=false&mode=transitg&alternatives=true");
 		return urlString.toString();
 	}
 
@@ -63,7 +63,7 @@ public class RouteDraw {
 		catch (JSONException e) {
 			e.printStackTrace();
 		}
-	} 
+	}
 	
 	private List<LatLng> decodePoly(String encoded) {
 

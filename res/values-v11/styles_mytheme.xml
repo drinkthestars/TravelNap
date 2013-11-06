@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="ButtonMyTheme" parent="android:Widget.Holo.Button">
+	  <item name="android:background">@drawable/btn_default_holo_dark</item>
+  </style>
+
+  <style name="ImageButtonMyTheme" parent="android:Widget.Holo.ImageButton">
+	  <item name="android:background">@drawable/btn_default_holo_dark</item>
+  </style>
+
+  <style name="ProgressBarMyTheme" parent="android:Widget.Holo.ProgressBar.Horizontal">
+      <item name="android:progressDrawable">@drawable/progress_horizontal_holo_dark</item>
+      <item name="android:indeterminateDrawable">@drawable/progress_indeterminate_horizontal_holo_dark</item>
+  </style>
+
+  <style name="ToggleMyTheme" parent="android:Widget.Holo.Button.Toggle">
+      <item name="android:background">@drawable/btn_toggle_holo_dark</item>
+  </style>
+
+</resources>

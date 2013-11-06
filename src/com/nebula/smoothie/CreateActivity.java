@@ -4,19 +4,24 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.location.Location;
-import android.media.Ringtone;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
@@ -43,6 +48,8 @@ import com.loopj.android.http.JsonHttpResponseHandler;
 public class CreateActivity extends FragmentActivity implements
 GooglePlayServicesClient.ConnectionCallbacks,
 GooglePlayServicesClient.OnConnectionFailedListener,
+CreateOptions.OnAlarmAddedListener,
+CreateOptions.OnLocationSubmitListener,
 LocationListener{
 
 	// Global constants
@@ -56,6 +63,7 @@ LocationListener{
 	LatLng dest = null;
 	boolean mUpdatesRequested = true;
 	NapAlarm newAlarm;
+	MediaPlayer r;
 	
 	// Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -83,7 +91,12 @@ LocationListener{
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		setupViews();
+		FragmentManager manager = getSupportFragmentManager();
+		FragmentTransaction ft = manager.beginTransaction();
+		ft.replace(R.id.flFrame, new CreateOptions());
+		// or ft.add(R.id.your_placeholder, new FooFragment());
+		ft.commit();
+		//setupViews();
 		
 		// Create the LocationRequest object
         mLocationRequest = LocationRequest.create();
@@ -168,8 +181,10 @@ LocationListener{
 
 	//Setup views
 	public void setupViews() {
-		etLocation = (EditText) findViewById(R.id.etLocation);
-		btSubmit = (Button) findViewById(R.id.btSubmit);
+		CreateOptions myFrag = new CreateOptions();
+		View view = myFrag.getView();
+		etLocation = (EditText)view.findViewById(R.id.etLocation);
+		btSubmit = (Button)view.findViewById(R.id.btSubmit);
 	}
 
 	/*
@@ -263,19 +278,22 @@ LocationListener{
 		// Display the connection status
         Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
         // If already requested, start periodic updates
-        
-        Log.d("DEBUG", "===========>mUpdatesRequested: " + mUpdatesRequested);
-        if (true) {
-        	Log.d("DEBUG", "!!!!!!!!!!!!!! PREIODIC UPDATES STARTED");
-            mLocationClient.requestLocationUpdates(mLocationRequest, this);
-        }
+	}
+	
+	public void onAddAlarm() { 
+		mLocationClient.requestLocationUpdates(mLocationRequest, this);
+		Toast.makeText(this, "Alarm Started!", Toast.LENGTH_SHORT).show();
+		FragmentManager manager = getSupportFragmentManager();
+		FragmentTransaction ft = manager.beginTransaction();
+		ft.add(R.id.flFrame, new AlarmRunning());
+		// or ft.add(R.id.your_placeholder, new FooFragment());
+		ft.commit();
 	}
 	
     // Define the callback method that receives location updates
     @Override
     public void onLocationChanged(Location location) {
-    	Log.d("DEBUG", "!!!!!!!!!! LOCATION CHANGED! !!!!!!!!!!!");
-        // Report to the UI that the location was updated
+    	// Report to the UI that the location was updated
         String msg = "Updated Location: " +
                 Double.toString(location.getLatitude()) + "," +
                 Double.toString(location.getLongitude());
@@ -299,17 +317,49 @@ LocationListener{
 				dist = JSONParser.getDistance(new JSONObject(json));
 				newAlarm.setDistance(dist);
 				Log.d("DEBUG", "NEW DISTANCE: " + dist);
-				if (dist <= 0.5) {
+				if (dist <= 0.8) {
 					//ring the alarm
-					Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-					Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), notification);
-					r.play();
+					try {
+						Uri alert =  RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+						r = new MediaPlayer();
+						r.setDataSource(this, alert);
+						final AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+						if (audioManager.getStreamVolume(AudioManager.STREAM_RING) != 0) {
+							r.setAudioStreamType(AudioManager.STREAM_RING);
+							r.setLooping(true);
+							r.prepare();
+							r.start();
+						}
+					} catch(Exception e) {
+						e.printStackTrace();
+					}   
+					if (mLocationClient.isConnected()) {
+						mLocationClient.removeLocationUpdates(this);
+			        }
+					AlertDialog.Builder builder = new AlertDialog.Builder(this);
+					builder.setMessage("You are " + dist + " miles from your destination!").setPositiveButton("I'm up!", dialogClickListener).show();
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
         }
     }
+    
+    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which){
+            case DialogInterface.BUTTON_POSITIVE:
+            	r.stop();
+                CreateActivity.this.finish();
+                break;
+
+            case DialogInterface.BUTTON_NEGATIVE:
+                //No button clicked
+                break;
+            }
+        }
+    };
     
     @Override
     protected void onPause() {
@@ -379,8 +429,14 @@ LocationListener{
 		});
 	}
 
-	public void onSubmitLocation(View v) {
-		String location = etLocation.getText().toString();
+	public void onSubmitLocation(String location) {
+		Log.d("DEBUG", "NEW LOC: " + location);
+		loadAddressLatLon(location);
+	}
+	
+	public void onSubmitLoc(View v) {
+		EditText etLoc = (EditText) v.findViewById(R.id.etLocation);
+		String location = etLoc.getText().toString();
 		Log.d("DEBUG", "NEW LOC: " + location);
 		loadAddressLatLon(location);
 	}
@@ -425,5 +481,15 @@ LocationListener{
 				rdraw.drawPath(result);
 			}
 		}
+	}
+
+	@Override
+	public void onAlarmAdded() {
+		onAddAlarm();
+	}
+
+	@Override
+	public void onLocationSubmitted(String location) {
+		onSubmitLocation(location);
 	}
 }

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#505054"
+    tools:context=".MainActivity" >
+
+    <TextView
+        android:id="@+id/tvAlarmRunning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="52dp"
+        android:paddingLeft="30dp"
+        android:text="The alarm is running and will wake you up when you are close to your destination!"
+        android:textColor="#5CADFF" />
+
+</RelativeLayout>

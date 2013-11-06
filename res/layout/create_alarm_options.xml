@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CreateOptions" >
+
+	<Button
+	    android:id="@+id/btSubmit"
+	    style="?android:attr/buttonStyleSmall"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignBaseline="@+id/etLocation"
+	    android:layout_alignBottom="@+id/etLocation"
+	    android:layout_toRightOf="@+id/etLocation"
+	    android:background="@drawable/btn_default_holo_dark"
+	    android:text="Go" />
+
+	<EditText
+	    android:id="@+id/etLocation"
+	    style="@style/EditTextMyTheme"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentLeft="true"
+	    android:layout_alignParentTop="true"
+	    android:layout_marginLeft="56dp"
+	    android:layout_marginTop="20dp"
+	    android:background="@drawable/edit_text_holo_dark"
+	    android:ems="10"
+	    android:textColor="#ffffff"
+	    android:textSize="13sp" >
+
+	    <requestFocus />
+	</EditText>
+
+	<Button
+	    android:id="@+id/btAddLoc"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignLeft="@+id/etLocation"
+	    android:layout_alignRight="@+id/btSubmit"
+	    android:layout_below="@+id/btSubmit"
+	    android:layout_marginTop="21dp"
+	    android:background="@drawable/btn_default_holo_dark"
+	    android:text="Add Destination"
+	    android:textSize="13sp" />
+
+</RelativeLayout>
