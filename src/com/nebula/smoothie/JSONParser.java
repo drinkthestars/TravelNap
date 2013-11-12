@@ -103,6 +103,7 @@ public class JSONParser {
     
     public static LatLng getLatLng(JSONObject jsonObj) {
     	LatLng latlng = null;
+    	Log.d("DEBUG", "INSIDE GETLATLANG = " + jsonObj);
     	JSONArray locInfo;
 		try {
 			locInfo = jsonObj.getJSONArray("results");

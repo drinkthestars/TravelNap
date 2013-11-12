@@ -1,68 +1,63 @@
 package com.nebula.smoothie;
 
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
+import com.activeandroid.query.Select;
 import com.google.android.gms.maps.model.LatLng;
 
 /*
  * Model for an alarm
  */
-public class NapAlarm{
-	private LatLng source;
+@Table(name = "NapAlarms")
+public class NapAlarm extends Model{
+	@Column(name = "Name")
+	public String name;
 	
-	private LatLng dest;
+	@Column(name = "Dest")
+	public LatLng dest;
 	
-	private String transMode;
+//	@Column(name = "Name")
+//	private String transMode;
 	
-	private double distance;
-	
-	private double thresh;
-	
+//	@Column(name = "Name")
+//	private double thresh;
+//	
 	public NapAlarm() {
 		super();
 	}
 	
-	public NapAlarm(LatLng source, LatLng dest) {
+	public NapAlarm(String name, LatLng dest) {
 		super();
-		this.source = source;
+		this.name = name;
 		this.dest = dest;
-	}
-	
-	public void setSource(LatLng source) {
-		this.source = source;
 	}
 	
 	public void setDest(LatLng dest) {
 		this.dest = dest;
 	}
 	
-	public void setDistance(double distance) {
-		this.distance = distance;
-	}
-	
-	public void setTransMode(String transMode) {
-		this.transMode = transMode;
-	}
-	
-	public void setThresh(double thresh) {
-		this.thresh = thresh;
-	}
-	
-	public LatLng getSource() {
-		return source;
-	}
-	
+//	public void setTransMode(String transMode) {
+//		this.transMode = transMode;
+//	}
+//	
+//	public void setThresh(double thresh) {
+//		this.thresh = thresh;
+//	}
+
 	public LatLng getDest() {
 		return dest;
 	}
 	
-	public double getDistance() {
-		return distance;
+	public static NapAlarm getAlarm() {
+		return new Select().from(NapAlarm.class).executeSingle();
 	}
 	
-	public String getTransMode() {
-		return transMode;
-	}
-	
-	public double getThresh() {
-		return thresh;
-	}
+//	public String getTransMode() {
+//		return transMode;
+//	}
+//	
+//	public double getThresh() {
+//		return thresh;
+//	}
 }

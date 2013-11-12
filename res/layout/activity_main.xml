@@ -5,15 +5,13 @@
     tools:context=".MainActivity"
     android:background="#505054" 
     android:textColor="#5CADFF">
-
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="186dp"
-        android:text="Add a new alarm"
-        android:textColor="#5CADFF" />
+	
+    <ListView
+        android:id="@+id/lvAlarms"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true" >
+    </ListView>
 
 </RelativeLayout>

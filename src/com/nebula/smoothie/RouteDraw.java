@@ -35,7 +35,7 @@ public class RouteDraw {
 		.append(Double.toString( destlat));
 		urlString.append(",");
 		urlString.append(Double.toString( destlog));
-		urlString.append("&sensor=false&mode=transitg&alternatives=true");
+		urlString.append("&sensor=false&mode=driving&alternatives=true");
 		return urlString.toString();
 	}
 

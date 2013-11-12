@@ -126,6 +126,16 @@ LocationListener{
 
 		mLocationClient = new LocationClient(this, this, this);
 		newAlarm = new NapAlarm();
+		newAlarm.name = "MyFirstAlarm";
+        newAlarm.save();
+        
+		NapAlarm na = new NapAlarm();
+		na.name = "WHAT!!!!!!!";
+		na.save();
+		
+		NapAlarm na2 = new NapAlarm();
+		na2.name = "WHAT!!!!!!!12345";
+		na2.save();
 		
 		map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 		map.setMyLocationEnabled(true);
@@ -142,7 +152,7 @@ LocationListener{
 			mapView.getViewTreeObserver().addOnGlobalLayoutListener(new OnGlobalLayoutListener() {
 				@SuppressWarnings("deprecation")
 				// We use the new method when supported
-				@SuppressLint("NewApi")
+				@SuppressLint("NewApi")	
 				// We check which build version we are using.
 				@Override
 				public void onGlobalLayout() {
@@ -168,7 +178,7 @@ LocationListener{
 			currLng = mCurrentLocation.getLongitude();
 			
 			//Updating alarm obj
-			newAlarm.setSource(new LatLng(currLat, currLng));
+			//newAlarm.setSource(new LatLng(currLat, currLng));
 			Log.d("DEBUG", "Updated Alarm Object!");
 			
 			map.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currLat, currLng), 15));
@@ -305,7 +315,7 @@ LocationListener{
         double newLong = location.getLongitude();
         
         //Updating source in alarm
-        newAlarm.setSource(new LatLng(newlat, newLong));
+       // newAlarm.setSource(new LatLng(newlat, newLong));
         Log.d("DEBUG", "Updated source in alarm!");
         
         if (dest != null) {
@@ -315,7 +325,7 @@ LocationListener{
 			double dist;
 			try {
 				dist = JSONParser.getDistance(new JSONObject(json));
-				newAlarm.setDistance(dist);
+				//newAlarm.setDistance(dist);
 				Log.d("DEBUG", "NEW DISTANCE: " + dist);
 				if (dist <= 0.8) {
 					//ring the alarm
@@ -390,20 +400,23 @@ LocationListener{
 	public void loadAddressLatLon(String location){
 		AsyncHttpClient client = new AsyncHttpClient();
 		String apiReq = "http://maps.googleapis.com/maps/api/geocode/json?address=" + location.replace(" ", "+") + "&sensor=true";
+		Log.d("DEBUG", "API REQ - " + apiReq);
 		Log.d("DEBUG", "BEFORE CLIENT.GET()");
 		client.get(apiReq, new JsonHttpResponseHandler() {
 			@Override
 			public void onSuccess(JSONObject response) {
 				Log.d("DEBUG", "Got address info!");
-
-				//Adding marker
+		        //Adding marker
 				MarkerOptions mOpts = new MarkerOptions();
 				dest = JSONParser.getLatLng(response);
+				Log.d("DEBUG", "DEST: " + dest);
 				mOpts.position(dest);
 				map.addMarker(mOpts);
 
 				//Updating destination in alarm
-		        newAlarm.setDest(dest);
+		        newAlarm.dest = dest;
+		        newAlarm.save();
+
 		        Log.d("DEBUG", "Updated destination in alarm!");
 		        
 				//Animating camera
@@ -464,7 +477,7 @@ LocationListener{
 			String json = jParser.getStringJSONFromUrl(url);
 			try {
 				double dist = JSONParser.getDistance(new JSONObject(json));
-				newAlarm.setDistance(dist);
+				//newAlarm.setDistance(dist);
 				Log.d("DEBUG", "NEW DISTANCE: " + dist);
 			} catch (JSONException e) {
 				e.printStackTrace();
